@@ -23,6 +23,10 @@
     "clean-code",
     "json-repository"
   ],
+   "repository": {
+    "type": "git",
+    "url": "https://github.com/umutayb/pw-element-repository"
+  },
   "author": "Your Name",
   "license": "MIT"
 }
