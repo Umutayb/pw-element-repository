@@ -23,6 +23,7 @@
     "automation",
     "locators",
     "clean-code",
+    "page-object-model",
     "json-repository"
   ],
   "publishConfig": {
