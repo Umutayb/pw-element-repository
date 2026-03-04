@@ -4,7 +4,7 @@ on:
   push:
     tags:
       - '*'
-      
+
 permissions:
   contents: write
   id-token: write
@@ -17,7 +17,7 @@ jobs:
       - name: Checkout current branch
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0 # Critical for semantic-release to read commit history
+          fetch-depth: 0 
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -26,7 +26,6 @@ jobs:
           registry-url: 'https://registry.npmjs.org'
 
       - name: Install dependencies
-        # Using 'npm ci' is faster and more reliable in CI than 'npm install'
         run: npm ci
 
       - name: Build package
@@ -35,5 +34,5 @@ jobs:
       - name: Semantic Release
         run: npx semantic-release
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # Provided by GitHub automatically
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}        # The secret we just created
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} 
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}        
