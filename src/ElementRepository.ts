@@ -15,14 +15,14 @@ export class ElementRepository {
    * @param defaultTimeout Default wait timeout in milliseconds (defaults to 15000).
    */
   constructor(filePath: string, defaultTimeout?: number);
-  
+
   /**
    * Initializes the repository with pre-parsed JSON data.
    * @param data The parsed JSON object matching the PageObjectSchema.
    * @param defaultTimeout Default wait timeout in milliseconds (defaults to 15000).
    */
   constructor(data: PageObjectSchema, defaultTimeout?: number);
-  
+
   constructor(dataOrPath: string | PageObjectSchema, defaultTimeout: number = 15000) {
     if (typeof dataOrPath === 'string') {
       const absolutePath = path.resolve(process.cwd(), dataOrPath);
@@ -31,7 +31,7 @@ export class ElementRepository {
     } else {
       this.pageData = dataOrPath;
     }
-    
+
     this.defaultTimeout = defaultTimeout;
   }
 
@@ -52,7 +52,7 @@ export class ElementRepository {
    */
   public async get<P extends Page>(page: P, pageName: string, elementName: string): Promise<ReturnType<P['locator']>> {
     const selector = this.getSelector(pageName, elementName);
-    await page.waitForSelector(selector, { timeout: this.defaultTimeout }).catch(() => {});
+    await page.waitForSelector(selector, { timeout: this.defaultTimeout }).catch(() => { });
     return page.locator(selector);
   }
 
@@ -90,9 +90,11 @@ export class ElementRepository {
 
     const index = pickRandomIndex(count);
     const randomElement = baseLocator.nth(index);
-    
-    randomElement.waitFor({ state: 'attached', timeout: this.defaultTimeout }).catch(() => {});
-    randomElement.waitFor({ state: 'visible', timeout: this.defaultTimeout }).catch(() => {});
+
+    await Promise.all([
+      randomElement.waitFor({ state: 'attached', timeout: this.defaultTimeout }),
+      randomElement.waitFor({ state: 'visible', timeout: this.defaultTimeout })
+    ]);
 
     return randomElement;
   }
