@@ -5,24 +5,30 @@ on:
     tags:
       - '*'
 
-jobs:
-  npm-publish:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-      id-token: write
-      
-    steps:
-      - uses: actions/checkout@v6
-      - uses: actions/setup-node@v6
-        with:
-          node-version: 24
-          registry-url: 'https://registry.npmjs.org'
+permissions:
+  id-token: write 
+  contents: read
 
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          registry-url: 'https://registry.npmjs.org'
+          
       - run: npm ci
+      
       - run: npm run build --if-present
-      - run: NODE_AUTH_TOKEN="" npm publish --access public --provenance
+
+      - name: Publish to NPM
+        # 1. --access public: Required for first-time scoped or new packages
+        # 2. --provenance: Links this version to this specific GitHub run
+        run: npm publish --access public --provenance
         env:
-          NPM_CONFIG_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        name: 📦 Publish
-        continue-on-error: true
+          # THIS IS THE CRITICAL LINE:
+          # It maps your GitHub Secret to the internal variable npm uses
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
