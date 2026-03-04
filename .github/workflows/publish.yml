@@ -1,38 +1,39 @@
 name: Release
+
 on:
   push:
     tags:
       - '*'
-
+      
 permissions:
   contents: write
-  issues: write
-  pull-requests: write
   id-token: write
 
 jobs:
   release:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout Code
+      - name: Checkout current branch
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0 # Semantic-release needs full history to read commits
+          fetch-depth: 0 # Critical for semantic-release to read commit history
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: 'yarn' # Optimization: caches your yarn dependencies
+          registry-url: 'https://registry.npmjs.org'
 
       - name: Install dependencies
-        run: yarn install --frozen-lockfile
+        # Using 'npm ci' is faster and more reliable in CI than 'npm install'
+        run: npm ci
 
       - name: Build package
-        run: yarn build
+        run: npm run build
 
       - name: Semantic Release
         run: npx semantic-release
         env:
-          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # Provided by GitHub automatically
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}        # The secret we just created
