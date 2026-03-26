@@ -15,17 +15,46 @@ export const WEB_FORMATTERS: Record<string, SelectorFormatter> = {
 
 /**
  * Base Appium selector formatters shared across all non-web platforms.
+ *
+ * Supports both space-separated keys (`accessibility id`) and camelCase
+ * aliases (`accessibilityid`).  All keys are **lowercase** because
+ * {@link ElementRepository.getSelector} normalises with `toLowerCase()`
+ * before lookup.
+ *
  * Does not include `text` — that is platform-specific and added by
  * {@link ANDROID_FORMATTERS} and {@link IOS_FORMATTERS}.
  */
 export const APPIUM_FORMATTERS: Record<string, SelectorFormatter> = {
+  // ── identity / accessibility ──────────────────────────────────
   'accessibility id': (v) => `~${v}`,
+  accessibilityid:    (v) => `~${v}`,
+
+  // ── generic locators ──────────────────────────────────────────
   xpath:              (v) => v,
   id:                 (v) => `#${v}`,
-  uiautomator:        (v) => `android=${v}`,
-  predicate:          (v) => `-ios predicate string:${v}`,
-  'class chain':      (v) => `-ios class chain:${v}`,
+  name:               (v) => v,
+
+  // ── class-based ───────────────────────────────────────────────
   'class name':       (v) => v,
+  classname:          (v) => v,
+  'tag name':         (v) => v,
+  tagname:            (v) => v,
+
+  // ── Android-specific ──────────────────────────────────────────
+  uiautomator:            (v) => `android=${v}`,
+  androiduiautomator:     (v) => `android=${v}`,
+  'android data matcher': (v) => `-android datamatcher:${v}`,
+  androiddatamatcher:     (v) => `-android datamatcher:${v}`,
+  'android view matcher': (v) => `-android viewmatcher:${v}`,
+  androidviewmatcher:     (v) => `-android viewmatcher:${v}`,
+  'android view tag':     (v) => `-android viewtag:${v}`,
+  androidviewtag:         (v) => `-android viewtag:${v}`,
+
+  // ── iOS-specific ──────────────────────────────────────────────
+  predicate:              (v) => `-ios predicate string:${v}`,
+  iosnspredicatestring:   (v) => `-ios predicate string:${v}`,
+  'class chain':          (v) => `-ios class chain:${v}`,
+  iosclasschain:          (v) => `-ios class chain:${v}`,
 };
 
 /** Android-specific formatters — extends {@link APPIUM_FORMATTERS} with UiSelector text lookup. */
