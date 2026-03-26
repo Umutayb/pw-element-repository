@@ -4,7 +4,7 @@ import * as path from 'path';
 import { PageRepository, PageObject } from './schema/repository';
 import { pickRandomIndex } from './utils/math';
 import { Element, WebElement, PlatformElement } from './types';
-import { toAppiumSelector } from './selectors/appium';
+
 
 export class ElementRepository {
   private pageData: PageRepository;
@@ -55,11 +55,6 @@ export class ElementRepository {
     return this.platform === 'web';
   }
 
-  private getAppiumSelector(pageName: string, elementName: string): string {
-    const { strategy, value } = this.getSelectorRaw(pageName, elementName);
-    return toAppiumSelector(strategy, value, this.platform);
-  }
-
   /**
    * Updates the default timeout for all subsequent element retrievals.
    * @param timeout The new timeout in milliseconds.
@@ -81,7 +76,7 @@ export class ElementRepository {
       await page.waitForSelector(selector, { timeout: this.defaultTimeout }).catch(() => {});
       return new WebElement(page.locator(selector));
     }
-    const selector = this.getAppiumSelector(pageName, elementName);
+    const selector = this.getSelector(pageName, elementName);
     return new PlatformElement(page, selector);
   }
 
@@ -97,7 +92,7 @@ export class ElementRepository {
       const el = await this.get(page, pageName, elementName);
       return el.all();
     }
-    const selector = this.getAppiumSelector(pageName, elementName);
+    const selector = this.getSelector(pageName, elementName);
     const elements: any[] = await page.$$(selector);
     return elements.map(rawEl => new PlatformElement(page, selector, rawEl));
   }
@@ -126,7 +121,7 @@ export class ElementRepository {
       await randomEl.waitFor({ state: 'visible', timeout: this.defaultTimeout });
       return randomEl;
     }
-    const selector = this.getAppiumSelector(pageName, elementName);
+    const selector = this.getSelector(pageName, elementName);
     const elements: any[] = await page.$$(selector);
     if (elements.length === 0) {
       const msg = `No elements found for '${elementName}' on '${pageName}'`;
@@ -159,7 +154,7 @@ export class ElementRepository {
       }
       return filtered;
     }
-    const selector = this.getAppiumSelector(pageName, elementName);
+    const selector = this.getSelector(pageName, elementName);
     const elements: any[] = await page.$$(selector);
     for (const el of elements) {
       const elText: string = await el.getText();
@@ -238,7 +233,7 @@ export class ElementRepository {
       }
       return baseEl.nth(index);
     }
-    const selector = this.getAppiumSelector(pageName, elementName);
+    const selector = this.getSelector(pageName, elementName);
     const elements: any[] = await page.$$(selector);
     if (index < 0 || index >= elements.length) {
       const msg = `Index ${index} out of bounds for '${elementName}' on '${pageName}' (found ${elements.length} elements).`;
@@ -338,30 +333,46 @@ export class ElementRepository {
    * @throws Error if the page, element, or selector is not found.
    */
   public getSelector(pageName: string, elementName: string): string {
-    const page = this.findPage(pageName);
-    if (!page) throw new Error(`ElementRepository: Page '${pageName}' not found for platform '${this.platform}'.`);
+    const { strategy, value } = this.getSelectorRaw(pageName, elementName);
 
-    const element = page.elements.find((e) => e.elementName === elementName);
-    if (!element) throw new Error(`ElementRepository: Element '${elementName}' not found on page '${pageName}'.`);
-
-    const selector = element.selector;
-    if (!selector || Object.keys(selector).length === 0) {
-      throw new Error(`ElementRepository: Invalid selector for '${elementName}'.`);
+    if (this.isWebPlatform()) {
+      switch (strategy.toLowerCase()) {
+        case 'xpath': return `xpath=${value}`;
+        case 'text': return `text=${value}`;
+        case 'id': return `#${value}`;
+        case 'css': return `css=${value}`;
+        case 'testid': return `[data-testid='${value}']`;
+        case 'role': return `[role='${value}']`;
+        case 'placeholder': return `[placeholder='${value}']`;
+        case 'label': return `[aria-label='${value}']`;
+        default: return value;
+      }
     }
 
-    const key = Object.keys(selector)[0] as string;
-    const value = selector[key] as string;
-
-    switch (key.toLowerCase()) {
-      case 'xpath': return `xpath=${value}`;
-      case 'text': return `text=${value}`;
-      case 'id': return `#${value}`;
-      case 'css': return `css=${value}`;
-      case 'testid': return `[data-testid='${value}']`;
-      case 'role': return `[role='${value}']`;
-      case 'placeholder': return `[placeholder='${value}']`;
-      case 'label': return `[aria-label='${value}']`;
-      default: return value;
+    // Non-web (Appium) formatting
+    switch (strategy) {
+      case 'accessibility id':
+        return `~${value}`;
+      case 'xpath':
+        return value;
+      case 'id':
+        return `#${value}`;
+      case 'css':
+        return `css=${value}`;
+      case 'uiautomator':
+        return `android=${value}`;
+      case 'predicate':
+        return `-ios predicate string:${value}`;
+      case 'class chain':
+        return `-ios class chain:${value}`;
+      case 'class name':
+        return value;
+      case 'text':
+        if (this.platform === 'android') return `android=new UiSelector().text("${value}")`;
+        if (this.platform === 'ios') return `-ios predicate string:label == "${value}"`;
+        return value;
+      default:
+        return value;
     }
   }
 }
