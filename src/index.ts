@@ -10,4 +10,4 @@ export * from './types';
 // Export the primary class and selector formatters
 export { ElementRepository } from './repo';
 export type { SelectorFormatter } from './repo';
-export { WEB_FORMATTERS, APPIUM_FORMATTERS, ANDROID_FORMATTERS, IOS_FORMATTERS } from './repo';
+export * from './repo';
