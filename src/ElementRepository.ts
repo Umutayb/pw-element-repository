@@ -5,7 +5,6 @@ import { PageRepository, PageObject } from './schema/repository';
 import { pickRandomIndex } from './utils/math';
 import { Element, WebElement, PlatformElement } from './types';
 
-
 export class ElementRepository {
   private pageData: PageRepository;
   private defaultTimeout: number;
@@ -315,21 +314,16 @@ export class ElementRepository {
   }
 
   /**
-   * Parses the JSON schema and returns a Playwright-friendly selector string.
+   * Returns a platform-appropriate selector string based on the repository's configured platform.
    *
-   * Supported selector keys:
-   * - `css` — CSS selector (e.g., `"css": "button.primary"`)
-   * - `xpath` — XPath expression (e.g., `"xpath": "//button[@id='submit']"`)
-   * - `id` — Element ID, converted to CSS `#id` selector
-   * - `text` — Text content selector
-   * - `testid` / `testId` — Test ID attribute selector (configurable via constructor, defaults to `data-testid`)
-   * - `role` — ARIA role attribute selector (e.g., `"role": "button"`)
-   * - `placeholder` — Placeholder attribute selector
-   * - `label` — `aria-label` attribute selector
+   * **Web (Playwright) selector keys:** css, xpath, id, text, testid, role, placeholder, label
+   *
+   * **Non-web (Appium) selector keys:** accessibility id, xpath, id, css, uiautomator,
+   * predicate, class chain, class name, text
    *
    * @param pageName The name of the page block in the JSON repository.
    * @param elementName The specific element name to look up.
-   * @returns The raw string selector formatted for Playwright (e.g. 'css=...', 'xpath=...').
+   * @returns A selector string formatted for Playwright (web) or Appium (non-web).
    * @throws Error if the page, element, or selector is not found.
    */
   public getSelector(pageName: string, elementName: string): string {
