@@ -9,6 +9,7 @@ export interface Element {
 
 export interface PageObject {
   name: string;
+  platform?: string;
   elements: Element[];
 }
 

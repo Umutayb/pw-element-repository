@@ -1,29 +1,32 @@
 import * as fs from 'fs';
 import * as path from 'path';
 
-import { PageRepository } from './schema/repository';
+import { PageRepository, PageObject } from './schema/repository';
 import { Page } from './schema/page';
 import { pickRandomIndex } from './utils/math';
 
 export class ElementRepository {
   private pageData: PageRepository;
   private defaultTimeout: number;
+  private platform: string;
 
   /**
    * Initializes the repository with a path to a JSON file.
    * @param filePath Path to the JSON file (relative to the project root).
    * @param defaultTimeout Default wait timeout in milliseconds (defaults to 15000).
+   * @param platform The platform to filter pages by (defaults to 'web').
    */
-  constructor(filePath: string, defaultTimeout?: number);
+  constructor(filePath: string, defaultTimeout?: number, platform?: string);
 
   /**
    * Initializes the repository with pre-parsed JSON data.
    * @param data The parsed JSON object matching the PageObjectSchema.
    * @param defaultTimeout Default wait timeout in milliseconds (defaults to 15000).
+   * @param platform The platform to filter pages by (defaults to 'web').
    */
-  constructor(data: PageRepository, defaultTimeout?: number);
+  constructor(data: PageRepository, defaultTimeout?: number, platform?: string);
 
-  constructor(dataOrPath: string | PageRepository, defaultTimeout: number = 15000) {
+  constructor(dataOrPath: string | PageRepository, defaultTimeout: number = 15000, platform: string = 'web') {
     if (typeof dataOrPath === 'string') {
       const absolutePath = path.resolve(process.cwd(), dataOrPath);
       const rawData = fs.readFileSync(absolutePath, 'utf-8');
@@ -33,6 +36,19 @@ export class ElementRepository {
     }
 
     this.defaultTimeout = defaultTimeout;
+    this.platform = platform;
+  }
+
+  /**
+   * Finds a page by name filtered by the current platform.
+   * Pages without a `platform` field default to 'web'.
+   * @param pageName The name of the page block in the JSON repository.
+   * @returns The matching PageObject, or undefined if not found.
+   */
+  private findPage(pageName: string): PageObject | undefined {
+    return this.pageData.pages.find(
+      (p) => p.name === pageName && (p.platform ?? 'web') === this.platform
+    );
   }
 
   /**
@@ -277,9 +293,34 @@ export class ElementRepository {
    * @returns The raw string selector formatted for Playwright (e.g., 'css=...', 'xpath=...').
    * @throws Error if the page, element, or selector is not found.
    */
+  /**
+   * Returns the raw selector strategy and value without Playwright-specific formatting.
+   * @param pageName The name of the page block in the JSON repository.
+   * @param elementName The specific element name to look up.
+   * @returns An object with `strategy` (e.g. 'css', 'xpath', 'id') and `value` (the raw selector value).
+   * @throws Error if the page, element, or selector is not found.
+   */
+  public getSelectorRaw(pageName: string, elementName: string): { strategy: string; value: string } {
+    const page = this.findPage(pageName);
+    if (!page) throw new Error(`ElementRepository: Page '${pageName}' not found for platform '${this.platform}'.`);
+
+    const element = page.elements.find((e) => e.elementName === elementName);
+    if (!element) throw new Error(`ElementRepository: Element '${elementName}' not found on page '${pageName}'.`);
+
+    const selector = element.selector;
+    if (!selector || Object.keys(selector).length === 0) {
+      throw new Error(`ElementRepository: Invalid selector for '${elementName}'.`);
+    }
+
+    const strategy = Object.keys(selector)[0] as string;
+    const value = selector[strategy] as string;
+
+    return { strategy, value };
+  }
+
   public getSelector(pageName: string, elementName: string): string {
-    const page = this.pageData.pages.find((p) => p.name === pageName);
-    if (!page) throw new Error(`ElementRepository: Page '${pageName}' not found.`);
+    const page = this.findPage(pageName);
+    if (!page) throw new Error(`ElementRepository: Page '${pageName}' not found for platform '${this.platform}'.`);
 
     const element = page.elements.find((e) => e.elementName === elementName);
     if (!element) throw new Error(`ElementRepository: Element '${elementName}' not found on page '${pageName}'.`);
