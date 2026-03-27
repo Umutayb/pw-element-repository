@@ -20,25 +20,22 @@ import {
 export class ElementRepository {
   private pageData: PageRepository;
   private defaultTimeout: number;
-  private platform: string;
 
   /**
    * Initializes the repository with a path to a JSON file.
    * @param filePath Path to the JSON file (relative to the project root).
    * @param defaultTimeout Default wait timeout in milliseconds (defaults to 15000).
-   * @param platform The platform to filter pages by (defaults to 'web').
    */
-  constructor(filePath: string, defaultTimeout?: number, platform?: string);
+  constructor(filePath: string, defaultTimeout?: number);
 
   /**
    * Initializes the repository with pre-parsed JSON data.
    * @param data The parsed JSON object matching the PageObjectSchema.
    * @param defaultTimeout Default wait timeout in milliseconds (defaults to 15000).
-   * @param platform The platform to filter pages by (defaults to 'web').
    */
-  constructor(data: PageRepository, defaultTimeout?: number, platform?: string);
+  constructor(data: PageRepository, defaultTimeout?: number);
 
-  constructor(dataOrPath: string | PageRepository, defaultTimeout: number = 15000, platform: string = 'web') {
+  constructor(dataOrPath: string | PageRepository, defaultTimeout: number = 15000) {
     if (typeof dataOrPath === 'string') {
       const absolutePath = path.resolve(process.cwd(), dataOrPath);
       const rawData = fs.readFileSync(absolutePath, 'utf-8');
@@ -47,24 +44,20 @@ export class ElementRepository {
       this.pageData = dataOrPath;
     }
     this.defaultTimeout = defaultTimeout;
-    this.platform = platform;
   }
 
   /**
-   * Finds a page by name filtered by the current platform.
-   * Pages without a `platform` field default to 'web'.
+   * Finds a page by name.
    * @param pageName The name of the page block in the JSON repository.
    * @returns The matching PageObject, or undefined if not found.
    */
   private findPage(pageName: string): PageObject | undefined {
-    return this.pageData.pages.find(
-      (p) => p.name === pageName && (p.platform ?? 'web') === this.platform
-    );
+    return this.pageData.pages.find((p) => p.name === pageName);
   }
 
-  /** Returns `true` when the repository is configured for the `'web'` platform. */
-  private isWebPlatform(): boolean {
-    return this.platform === 'web';
+  /** Returns `true` when the given page is configured for the `'web'` platform. */
+  private static isWebPlatform(page: PageObject): boolean {
+    return (page.platform ?? 'web') === 'web';
   }
 
   /**
@@ -89,7 +82,8 @@ export class ElementRepository {
    */
   private async resolveElement(page: any, pageName: string, elementName: string): Promise<Element> {
     const selector = this.getSelector(pageName, elementName);
-    const element = this.isWebPlatform()
+    const pageObj = this.findPage(pageName);
+    const element = ElementRepository.isWebPlatform(pageObj!)
       ? new WebElement(page.locator(selector))
       : new PlatformElement(page, selector);
     await element.waitFor({ state: 'attached', timeout: this.defaultTimeout }).catch(() => {});
@@ -277,7 +271,7 @@ export class ElementRepository {
    */
   public getSelectorRaw(pageName: string, elementName: string): { strategy: string; value: string } {
     const page = this.findPage(pageName);
-    if (!page) throw new Error(`ElementRepository: Page '${pageName}' not found for platform '${this.platform}'.`);
+    if (!page) throw new Error(`ElementRepository: Page '${pageName}' not found.`);
 
     const element = page.elements.find((e) => e.elementName === elementName);
     if (!element) throw new Error(`ElementRepository: Element '${elementName}' not found on page '${pageName}'.`);
@@ -294,7 +288,7 @@ export class ElementRepository {
   }
 
   /**
-   * Returns a platform-appropriate selector string based on the repository's configured platform.
+   * Returns a platform-appropriate selector string based on the page's platform field.
    *
    * **Web (Playwright) selector keys:** css, xpath, id, text, testid, role, placeholder, label
    *
@@ -313,19 +307,20 @@ export class ElementRepository {
    */
   public getSelector(pageName: string, elementName: string): string {
     const { strategy, value } = this.getSelectorRaw(pageName, elementName);
-    const formatters = this.getFormatters();
+    const page = this.findPage(pageName)!;
+    const formatters = this.getFormattersForPlatform(page.platform ?? 'web');
     const formatter = formatters[strategy.toLowerCase()];
     return formatter ? formatter(value) : value;
   }
 
   /**
-   * Returns the {@link SelectorFormatter} lookup table for the current platform.
+   * Returns the {@link SelectorFormatter} lookup table for the given platform.
    * Falls back to the base {@link APPIUM_FORMATTERS} for unrecognised non-web platforms.
    */
-  private getFormatters(): Record<string, SelectorFormatter> {
-    if (this.isWebPlatform()) return WEB_FORMATTERS;
-    if (this.platform === 'android') return ANDROID_FORMATTERS;
-    if (this.platform === 'ios') return IOS_FORMATTERS;
+  private getFormattersForPlatform(platform: string): Record<string, SelectorFormatter> {
+    if (platform === 'web') return WEB_FORMATTERS;
+    if (platform === 'android') return ANDROID_FORMATTERS;
+    if (platform === 'ios') return IOS_FORMATTERS;
     return APPIUM_FORMATTERS;
   }
 }

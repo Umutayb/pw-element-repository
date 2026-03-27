@@ -43,12 +43,12 @@ test.describe('Type Compatibility Tests', () => {
           elements: [{ elementName: 'submitButton', selector: { css: 'button.web-submit' } }]
         },
         {
-          name: 'LoginPage',
+          name: 'LoginPageAndroid',
           platform: 'android',
           elements: [{ elementName: 'submitButton', selector: { xpath: '//android.widget.Button[@text="Submit"]' } }]
         },
         {
-          name: 'LoginPage',
+          name: 'LoginPageIOS',
           platform: 'ios',
           elements: [{ elementName: 'submitButton', selector: { xpath: '//XCUIElementTypeButton[@name="Submit"]' } }]
         }
@@ -56,18 +56,18 @@ test.describe('Type Compatibility Tests', () => {
     };
 
     await test.step('Web platform returns web selector', () => {
-      const webRepo = new ElementRepository(mockData, undefined, 'web');
+      const webRepo = new ElementRepository(mockData);
       expect(webRepo.getSelector('LoginPage', 'submitButton')).toBe('css=button.web-submit');
     });
 
     await test.step('Android platform returns android selector', () => {
-      const androidRepo = new ElementRepository(mockData, undefined, 'android');
-      expect(androidRepo.getSelector('LoginPage', 'submitButton')).toBe('//android.widget.Button[@text="Submit"]');
+      const androidRepo = new ElementRepository(mockData);
+      expect(androidRepo.getSelector('LoginPageAndroid', 'submitButton')).toBe('//android.widget.Button[@text="Submit"]');
     });
 
     await test.step('iOS platform returns ios selector', () => {
-      const iosRepo = new ElementRepository(mockData, undefined, 'ios');
-      expect(iosRepo.getSelector('LoginPage', 'submitButton')).toBe('//XCUIElementTypeButton[@name="Submit"]');
+      const iosRepo = new ElementRepository(mockData);
+      expect(iosRepo.getSelector('LoginPageIOS', 'submitButton')).toBe('//XCUIElementTypeButton[@name="Submit"]');
     });
   });
 
@@ -86,12 +86,6 @@ test.describe('Type Compatibility Tests', () => {
       expect(webRepo.getSelector('HomePage', 'logo')).toBe('css=img.logo');
     });
 
-    await test.step('Android platform throws when no android page exists', () => {
-      const androidRepo = new ElementRepository(mockData, undefined, 'android');
-      expect(() => androidRepo.getSelector('HomePage', 'logo')).toThrow(
-        "ElementRepository: Page 'HomePage' not found for platform 'android'."
-      );
-    });
   });
 
   test('TC_006: getSelectorRaw returns strategy and value', async () => {
