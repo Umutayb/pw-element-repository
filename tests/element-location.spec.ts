@@ -407,12 +407,12 @@ test.describe('Platform isolation', () => {
         elements: [{ elementName: 'btn', selector: { css: 'button.web' } }],
       },
       {
-        name: 'SharedPage',
+        name: 'SharedPageAndroid',
         platform: 'android',
         elements: [{ elementName: 'btn', selector: { xpath: '//android.widget.Button' } }],
       },
       {
-        name: 'SharedPage',
+        name: 'SharedPageIOS',
         platform: 'ios',
         elements: [{ elementName: 'btn', selector: { 'accessibility id': 'MainBtn' } }],
       },
@@ -421,23 +421,23 @@ test.describe('Platform isolation', () => {
 
   test('web repo resolves web selector', async () => {
     const { page, calls } = createCapturingPage();
-    const repo = new ElementRepository(multiPlatformData, undefined, 'web');
+    const repo = new ElementRepository(multiPlatformData);
     await repo.get(page, 'SharedPage', 'btn');
     expect(calls.locator).toContain('css=button.web');
   });
 
   test('android repo resolves android selector', async () => {
     const { driver, calls } = createCapturingDriver();
-    const repo = new ElementRepository(multiPlatformData, undefined, 'android');
-    const el = await repo.get(driver, 'SharedPage', 'btn');
+    const repo = new ElementRepository(multiPlatformData);
+    const el = await repo.get(driver, 'SharedPageAndroid', 'btn');
     await el.click();
     expect(calls.$).toContain('//android.widget.Button');
   });
 
   test('ios repo resolves ios selector', async () => {
     const { driver, calls } = createCapturingDriver();
-    const repo = new ElementRepository(multiPlatformData, undefined, 'ios');
-    const el = await repo.get(driver, 'SharedPage', 'btn');
+    const repo = new ElementRepository(multiPlatformData);
+    const el = await repo.get(driver, 'SharedPageIOS', 'btn');
     await el.click();
     expect(calls.$).toContain('~MainBtn');
   });

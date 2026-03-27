@@ -27,12 +27,12 @@ const multiPlatformMockData = {
       elements: [{ elementName: 'submitButton', selector: { css: 'button.web-submit' } }],
     },
     {
-      name: 'LoginPage',
+      name: 'LoginPageAndroid',
       platform: 'android',
       elements: [{ elementName: 'submitButton', selector: { xpath: '//android.widget.Button' } }],
     },
     {
-      name: 'LoginPage',
+      name: 'LoginPageIOS',
       platform: 'ios',
       elements: [{ elementName: 'submitButton', selector: { xpath: '//XCUIElementTypeButton' } }],
     },
@@ -138,7 +138,7 @@ test.describe('setDefaultTimeout', () => {
         waitFor: async (opts?: any) => { capturedTimeout = opts?.timeout; },
       }),
     };
-    const repo = new ElementRepository(webMockData, 15000, 'web');
+    const repo = new ElementRepository(webMockData, 15000);
     repo.setDefaultTimeout(9999);
     await repo.get(mockPage, 'TestPage', 'button');
     expect(capturedTimeout).toBe(9999);
@@ -151,9 +151,9 @@ test.describe('setDefaultTimeout', () => {
 
 test.describe('get — platform (android)', () => {
   test('returns a PlatformElement', async () => {
-    const repo = new ElementRepository(multiPlatformMockData, undefined, 'android');
+    const repo = new ElementRepository(multiPlatformMockData);
     const driver = createMockDriver();
-    const el = await repo.get(driver, 'LoginPage', 'submitButton');
+    const el = await repo.get(driver, 'LoginPageAndroid', 'submitButton');
     expect(el).toBeInstanceOf(PlatformElement);
   });
 });
@@ -173,9 +173,9 @@ test.describe('getAll', () => {
   });
 
   test('returns an array of PlatformElements for android platform', async () => {
-    const repo = new ElementRepository(multiPlatformMockData, undefined, 'android');
+    const repo = new ElementRepository(multiPlatformMockData);
     const driver = createMockDriver([createMockDriverElement(), createMockDriverElement()]);
-    const elements = await repo.getAll(driver, 'LoginPage', 'submitButton');
+    const elements = await repo.getAll(driver, 'LoginPageAndroid', 'submitButton');
     expect(Array.isArray(elements)).toBe(true);
     expect(elements.length).toBe(2);
     expect(elements[0]).toBeInstanceOf(PlatformElement);
@@ -211,25 +211,25 @@ test.describe('getRandom', () => {
   });
 
   test('returns a PlatformElement when elements exist (android)', async () => {
-    const repo = new ElementRepository(multiPlatformMockData, undefined, 'android');
+    const repo = new ElementRepository(multiPlatformMockData);
     const driver = createMockDriver([createMockDriverElement(), createMockDriverElement()]);
-    const el = await repo.getRandom(driver, 'LoginPage', 'submitButton');
+    const el = await repo.getRandom(driver, 'LoginPageAndroid', 'submitButton');
     expect(el).not.toBeNull();
     expect(el).toBeInstanceOf(PlatformElement);
   });
 
   test('returns null when no platform elements found (strict=false)', async () => {
-    const repo = new ElementRepository(multiPlatformMockData, undefined, 'android');
+    const repo = new ElementRepository(multiPlatformMockData);
     const driver = createMockDriver([]);
-    const el = await repo.getRandom(driver, 'LoginPage', 'submitButton', false);
+    const el = await repo.getRandom(driver, 'LoginPageAndroid', 'submitButton', false);
     expect(el).toBeNull();
   });
 
   test('throws when no platform elements found (strict=true)', async () => {
-    const repo = new ElementRepository(multiPlatformMockData, undefined, 'android');
+    const repo = new ElementRepository(multiPlatformMockData);
     const driver = createMockDriver([]);
-    await expect(repo.getRandom(driver, 'LoginPage', 'submitButton', true)).rejects.toThrow(
-      "No elements found for 'submitButton' on 'LoginPage'"
+    await expect(repo.getRandom(driver, 'LoginPageAndroid', 'submitButton', true)).rejects.toThrow(
+      "No elements found for 'submitButton' on 'LoginPageAndroid'"
     );
   });
 });
@@ -277,25 +277,25 @@ test.describe('getByText', () => {
     const matchingEl = createMockDriverElement({ getText: async () => 'Submit' });
     const nonMatchingEl = createMockDriverElement({ getText: async () => 'Cancel' });
     const driver = createMockDriver([nonMatchingEl, matchingEl]);
-    const repo = new ElementRepository(multiPlatformMockData, undefined, 'android');
-    const el = await repo.getByText(driver, 'LoginPage', 'submitButton', 'Submit');
+    const repo = new ElementRepository(multiPlatformMockData);
+    const el = await repo.getByText(driver, 'LoginPageAndroid', 'submitButton', 'Submit');
     expect(el).not.toBeNull();
     expect(el).toBeInstanceOf(PlatformElement);
   });
 
   test('returns null when text not found on platform (strict=false)', async () => {
     const driver = createMockDriver([createMockDriverElement({ getText: async () => 'Cancel' })]);
-    const repo = new ElementRepository(multiPlatformMockData, undefined, 'android');
-    const el = await repo.getByText(driver, 'LoginPage', 'submitButton', 'Submit', false);
+    const repo = new ElementRepository(multiPlatformMockData);
+    const el = await repo.getByText(driver, 'LoginPageAndroid', 'submitButton', 'Submit', false);
     expect(el).toBeNull();
   });
 
   test('throws when text not found on platform (strict=true)', async () => {
     const driver = createMockDriver([createMockDriverElement({ getText: async () => 'Cancel' })]);
-    const repo = new ElementRepository(multiPlatformMockData, undefined, 'android');
+    const repo = new ElementRepository(multiPlatformMockData);
     await expect(
-      repo.getByText(driver, 'LoginPage', 'submitButton', 'Submit', true)
-    ).rejects.toThrow('Element \'submitButton\' on \'LoginPage\' with text "Submit" not found.');
+      repo.getByText(driver, 'LoginPageAndroid', 'submitButton', 'Submit', true)
+    ).rejects.toThrow('Element \'submitButton\' on \'LoginPageAndroid\' with text "Submit" not found.');
   });
 });
 
@@ -425,25 +425,25 @@ test.describe('getByIndex', () => {
 
   test('returns PlatformElement at valid index (android)', async () => {
     const driver = createMockDriver([createMockDriverElement(), createMockDriverElement(), createMockDriverElement()]);
-    const repo = new ElementRepository(multiPlatformMockData, undefined, 'android');
-    const el = await repo.getByIndex(driver, 'LoginPage', 'submitButton', 1);
+    const repo = new ElementRepository(multiPlatformMockData);
+    const el = await repo.getByIndex(driver, 'LoginPageAndroid', 'submitButton', 1);
     expect(el).not.toBeNull();
     expect(el).toBeInstanceOf(PlatformElement);
   });
 
   test('returns null when platform index out of bounds (strict=false)', async () => {
     const driver = createMockDriver([createMockDriverElement()]);
-    const repo = new ElementRepository(multiPlatformMockData, undefined, 'android');
-    const el = await repo.getByIndex(driver, 'LoginPage', 'submitButton', 5, false);
+    const repo = new ElementRepository(multiPlatformMockData);
+    const el = await repo.getByIndex(driver, 'LoginPageAndroid', 'submitButton', 5, false);
     expect(el).toBeNull();
   });
 
   test('throws when platform index out of bounds (strict=true)', async () => {
     const driver = createMockDriver([createMockDriverElement()]);
-    const repo = new ElementRepository(multiPlatformMockData, undefined, 'android');
+    const repo = new ElementRepository(multiPlatformMockData);
     await expect(
-      repo.getByIndex(driver, 'LoginPage', 'submitButton', 5, true)
-    ).rejects.toThrow("Index 5 out of bounds for 'submitButton' on 'LoginPage' (found 1 elements).");
+      repo.getByIndex(driver, 'LoginPageAndroid', 'submitButton', 5, true)
+    ).rejects.toThrow("Index 5 out of bounds for 'submitButton' on 'LoginPageAndroid' (found 1 elements).");
   });
 });
 
@@ -577,7 +577,7 @@ test.describe('Error cases', () => {
 
   test('getSelector throws when page not found', () => {
     expect(() => repo.getSelector('NonExistentPage', 'button')).toThrow(
-      "ElementRepository: Page 'NonExistentPage' not found for platform 'web'."
+      "ElementRepository: Page 'NonExistentPage' not found."
     );
   });
 
@@ -589,7 +589,7 @@ test.describe('Error cases', () => {
 
   test('getSelectorRaw throws when page not found', () => {
     expect(() => repo.getSelectorRaw('NonExistentPage', 'button')).toThrow(
-      "ElementRepository: Page 'NonExistentPage' not found for platform 'web'."
+      "ElementRepository: Page 'NonExistentPage' not found."
     );
   });
 
